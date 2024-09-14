@@ -2,7 +2,7 @@ import { Controller, Post, Get, Delete, Param, Body, UseInterceptors, UploadedFi
 import { FileInterceptor } from '@nestjs/platform-express';
 import { BlogPostsService } from './blog-posts.service';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiConsumes, ApiBody, ApiParam } from '@nestjs/swagger';
-import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 
 @ApiTags('BlogPosts')
 @ApiBearerAuth()
