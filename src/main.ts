@@ -5,7 +5,8 @@ import { initializeFirebaseApp } from "./firebase";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
+  app.enableCors()
+  
   initializeFirebaseApp()
 
   const config = new DocumentBuilder()
