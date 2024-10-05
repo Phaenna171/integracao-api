@@ -4,14 +4,22 @@ import { uploadBytes, ref as storageRef, getDownloadURL, getStorage, deleteObjec
 
 @Injectable()
 export class ProductsService {
-  async createProduct(data: any, file: Express.Multer.File) {
-    const storageReference = storageRef(getStorage(), `products/${file.originalname}`);
-    const uploadResult = await uploadBytes(storageReference, file.buffer);
-    const imageUrl = await getDownloadURL(uploadResult.ref);
+  async createProduct(data: any, files: Express.Multer.File[]) {
+
+    const carouselPhotos = await Promise.all(files.map(async el => {
+      const storageReference = storageRef(getStorage(), `products/${el.originalname}`);
+      const uploadResult = await uploadBytes(storageReference, el.buffer);
+      const imageUrl = await getDownloadURL(uploadResult.ref);
+      return imageUrl
+    }
+    ))
 
     const productsRef = ref(getDatabase(), 'products');
     const newProductRef = push(productsRef);
-    await set(newProductRef, { ...data, imageUrl });
+    await set(newProductRef, {
+      ...data, carouselPhotos, use: JSON.parse(data.use),
+      table: JSON.parse(data.table), indication: JSON.parse(data.indication)
+    });
 
     return { success: true, productId: newProductRef.key };
   }
@@ -43,31 +51,56 @@ export class ProductsService {
   async getProducts() {
     const productsRef = ref(getDatabase(), 'products');
     const snapshot = await get(productsRef);
+    const data = Object.entries(snapshot.val())?.map(([key, value]: [key: string, value: any]) => ({ ...value, id: key }))
+    return data || [];
+  }
+
+  async getProductById(id: string) {
+    const productsRef = ref(getDatabase(), `products/${id}`);
+    const snapshot = await get(productsRef);
     return snapshot.val() || [];
   }
 
-  async updateProduct(productId: string, data: any, file: Express.Multer.File) {
+  async updateProduct(productId: string, data: any, files: Express.Multer.File[]) {
     const productRef = ref(getDatabase(), `products/${productId}`);
 
+    // Check if the product exists
     const snapshot = await get(productRef);
     if (!snapshot.exists()) {
       throw new Error('Product not found');
     }
 
     const productData = snapshot.val();
-    let imageUrl = productData.imageUrl;
+    const storage = getStorage();
 
-    if (file) {
-      const storage = getStorage();
-      const oldImageRef = storageRef(storage, imageUrl);
-      await deleteObject(oldImageRef);
-
-      const newImageRef = storageRef(storage, `products/${file.originalname}`);
-      const uploadResult = await uploadBytes(newImageRef, file.buffer);
-      imageUrl = await getDownloadURL(uploadResult.ref);
+    // If there are existing carouselPhotos, remove the old ones from storage
+    if (productData.carouselPhotos && productData.carouselPhotos.length > 0) {
+      await Promise.all(
+        productData.carouselPhotos.map(async (url: string) => {
+          const oldImageRef = storageRef(storage, url);
+          await deleteObject(oldImageRef); // Delete old images
+        })
+      );
     }
 
-    await set(productRef, { ...data, imageUrl });
+    // Upload new carousel photos
+    const carouselPhotos = await Promise.all(
+      files.map(async (file) => {
+        const newImageRef = storageRef(storage, `products/${file.originalname}`);
+        const uploadResult = await uploadBytes(newImageRef, file.buffer);
+        return await getDownloadURL(uploadResult.ref); // Get the download URL for the uploaded image
+      })
+    );
+
+    // Update the product with new data and new carousel photos
+    await set(productRef, {
+      ...data,
+      carouselPhotos, // Update carousel photos
+      use: JSON.parse(data.use), // Parse use field
+      table: JSON.parse(data.table), // Parse table field
+      indication: JSON.parse(data.indication), // Parse indication field
+    });
+
     return { success: true };
   }
 }

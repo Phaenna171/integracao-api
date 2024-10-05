@@ -1,5 +1,5 @@
-import { Controller, Post, Get, Delete, Param, Body, UseInterceptors, UploadedFile, UseGuards, Put, BadRequestException } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Controller, Post, Get, Delete, Param, Body, UseInterceptors, UploadedFile, UseGuards, Put, BadRequestException, UploadedFiles } from '@nestjs/common';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ProductsService } from './products.service';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody, ApiConsumes, ApiParam } from '@nestjs/swagger';
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
@@ -7,12 +7,12 @@ import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 @ApiTags('Products')
 @ApiBearerAuth()
 @Controller('products')
-@UseGuards(JwtAuthGuard)
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) { }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FilesInterceptor('carouselPhotos'))
   @ApiOperation({ summary: 'Create a new product' })
   @ApiResponse({ status: 201, description: 'Product created successfully.' })
   @ApiConsumes('multipart/form-data')
@@ -24,15 +24,19 @@ export class ProductsController {
         subtitle: { type: 'string' },
         description: { type: 'string' },
         use: {
-          type: 'string',
-          format: 'binary',
+          type: 'array',
+          items: {
+            type: 'string'
+          }
         },
         indication: {
-          type: 'string',
-          format: 'binary',
+          type: 'array',
+          items: {
+            type: 'string'
+          }
         },
         category: { type: 'string' },
-        price: { type: 'number' },
+        // price: { type: 'number' },
         carouselPhotos: {
           type: 'array',
           items: {
@@ -50,16 +54,17 @@ export class ProductsController {
             },
             required: ['key', 'value'],
           },
-        }
+        },
+        tableTitle: { type: 'string' }
 
       },
     },
   })
   async createProduct(
     @Body() body: any,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFiles() carouselPhotos: Express.Multer.File[],
   ) {
-    return this.productsService.createProduct(body, file);
+    return this.productsService.createProduct(body, carouselPhotos);
   }
 
   @Get()
@@ -69,6 +74,14 @@ export class ProductsController {
     return this.productsService.getProducts();
   }
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Get all products' })
+  @ApiResponse({ status: 200, description: 'Return all products.' })
+  async getProductById(@Param('id') id: string) {
+    return this.productsService.getProductById(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a product' })
   @ApiResponse({ status: 200, description: 'Product deleted successfully.' })
@@ -76,8 +89,9 @@ export class ProductsController {
     return this.productsService.deleteProduct(id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Put(':productId')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FilesInterceptor('carouselPhotos'))
   @ApiOperation({ summary: 'Update an existing product' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -120,10 +134,10 @@ export class ProductsController {
     },
   })
   @ApiParam({ name: 'productId', description: 'ID of the product to update' })
-  async updateProduct(@Param('productId') productId: string, @UploadedFile() file: Express.Multer.File, @Body() data: any) {
+  async updateProduct(@Param('productId') productId: string, @UploadedFiles() carouselPhotos: Express.Multer.File[], @Body() data: any) {
     if (!productId) {
       throw new BadRequestException('Product ID is required');
     }
-    return await this.productsService.updateProduct(productId, data, file);
+    return await this.productsService.updateProduct(productId, data, carouselPhotos);
   }
 }

@@ -47,7 +47,9 @@ export class AuthService {
   // Function to reset a password
   async resetPassword(email: string) {
     try {
-      await sendPasswordResetEmail(getAuth(), email);
+      await sendPasswordResetEmail(getAuth(), email, {
+        url: `${process.env.NEXT_PUBLIC_FRONT_URL}/login`,
+      });
       return { message: 'Password reset email sent' };
     } catch (error) {
       if (error instanceof FirebaseError) {
