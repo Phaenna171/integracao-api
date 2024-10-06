@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ref, set, push, remove, get, getDatabase } from 'firebase/database';
+import { ref, set, push, remove, get, getDatabase, update } from 'firebase/database';
 import { uploadBytes, ref as storageRef, getDownloadURL, getStorage, deleteObject } from 'firebase/storage';
 
 @Injectable()
@@ -53,7 +53,7 @@ export class BannersService {
     return snapshot.val() || [];
   }
 
-  async updateBanner(bannerId: string, file: Express.Multer.File) {
+  async updateBanner(bannerId: string, data: any, file?: Express.Multer.File) {
     const bannerRef = ref(getDatabase(), `banners/${bannerId}`);
 
     const snapshot = await get(bannerRef);
@@ -61,10 +61,9 @@ export class BannersService {
       throw new Error('Banner not found');
     }
 
-    const bannerData = snapshot.val();
-    let imageUrl = bannerData.imageUrl;
-
     if (file) {
+      const bannerData = snapshot.val();
+      let imageUrl = bannerData.imageUrl;
       // Delete the old image from Firebase Storage
       const storage = getStorage();
       const oldImageRef = storageRef(storage, imageUrl);
@@ -74,10 +73,8 @@ export class BannersService {
       const newImageRef = storageRef(storage, `banners/${file.originalname}`);
       const uploadResult = await uploadBytes(newImageRef, file.buffer);
       imageUrl = await getDownloadURL(uploadResult.ref);
-    }
-
-    // Update the banner data
-    await set(bannerRef, { ...bannerData, imageUrl });
+      await set(bannerRef, { ...data, image: imageUrl });
+    } else await update(bannerRef, { ...data })
 
     return { success: true };
   }

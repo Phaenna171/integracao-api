@@ -39,7 +39,7 @@ export class BannersController {
     },
   })
   async createBanner(@Body() body: any, @UploadedFile() file: Express.Multer.File) {
-    return this.bannersService.createBanner(body,file);
+    return this.bannersService.createBanner(body, file);
   }
 
   @Get()
@@ -76,16 +76,16 @@ export class BannersController {
         file: {
           type: 'string',
           format: 'binary',
-          description: 'New banner image (optional)',
         },
+        link: { type: 'string' },
+        description: { type: 'string' },
+        title: { type: 'string' },
       },
     },
   })
   @ApiParam({ name: 'id', description: 'ID of the banner to update' })
-  async updateBanner(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
-    if (!id) {
-      throw new BadRequestException('Banner ID is required');
-    }
-    return await this.bannersService.updateBanner(id, file);
+  async updateBanner(@Param('id') id: string, @Body() body: any, @UploadedFile() file?: Express.Multer.File) {
+    if (!id) throw new BadRequestException('Banner ID is required');
+    return await this.bannersService.updateBanner(id, body, file);
   }
 }
