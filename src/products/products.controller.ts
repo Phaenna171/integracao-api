@@ -90,7 +90,7 @@ export class ProductsController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Put(':productId')
+  @Put(':id')
   @UseInterceptors(FilesInterceptor('carouselPhotos'))
   @ApiOperation({ summary: 'Update an existing product' })
   @ApiConsumes('multipart/form-data')
@@ -118,6 +118,12 @@ export class ProductsController {
             format: 'binary',
           },
         },
+        oldPhotos: {
+          type: 'array',
+          items: {
+            type: 'string',
+          },
+        },
         table: {
           type: 'array',
           items: {
@@ -133,11 +139,9 @@ export class ProductsController {
       },
     },
   })
-  @ApiParam({ name: 'productId', description: 'ID of the product to update' })
-  async updateProduct(@Param('productId') productId: string, @UploadedFiles() carouselPhotos: Express.Multer.File[], @Body() data: any) {
-    if (!productId) {
-      throw new BadRequestException('Product ID is required');
-    }
-    return await this.productsService.updateProduct(productId, data, carouselPhotos);
+  @ApiParam({ name: 'id', description: 'ID of the product to update' })
+  async updateProduct(@Param('id') id: string, @Body() data: any, @UploadedFiles() carouselPhotos?: Express.Multer.File[],) {
+    if (!id) throw new BadRequestException('Product ID is required');
+    return await this.productsService.updateProduct(id, data, carouselPhotos);
   }
 }
