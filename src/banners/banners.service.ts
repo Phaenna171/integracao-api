@@ -28,7 +28,7 @@ export class BannersService {
     }
 
     const bannerData = snapshot.val();
-    const imageUrl = bannerData.imageUrl;
+    const imageUrl = bannerData.image;
 
     const fileRef = storageRef(getStorage(), imageUrl);
     await deleteObject(fileRef);
@@ -63,7 +63,7 @@ export class BannersService {
 
     if (file) {
       const bannerData = snapshot.val();
-      let imageUrl = bannerData.imageUrl;
+      let imageUrl = bannerData.image;
       // Delete the old image from Firebase Storage
       const storage = getStorage();
       const oldImageRef = storageRef(storage, imageUrl);
