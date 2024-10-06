@@ -4,7 +4,7 @@ import { uploadBytes, ref as storageRef, getDownloadURL, getStorage, deleteObjec
 
 @Injectable()
 export class BannersService {
-  async createBanner(file: Express.Multer.File) {
+  async createBanner(data: any, file: Express.Multer.File) {
     if (!file) throw new Error('No file found')
     const storageReference = storageRef(getStorage(), `banners/${file.originalname}`);
     const uploadResult = await uploadBytes(storageReference, file.buffer);
@@ -12,7 +12,7 @@ export class BannersService {
 
     const bannersRef = ref(getDatabase(), 'banners');
     const newBannerRef = push(bannersRef);
-    await set(newBannerRef, { imageUrl });
+    await set(newBannerRef, { ...data, image: imageUrl });
 
     return { success: true, bannerId: newBannerRef.key };
   }
@@ -41,6 +41,14 @@ export class BannersService {
 
   async getBanners() {
     const bannersRef = ref(getDatabase(), 'banners');
+    const snapshot = await get(bannersRef);
+    if (!snapshot.exists()) return []
+    const data = Object.entries(snapshot.val())?.map(([key, value]: [key: string, value: any]) => ({ ...value, id: key }))
+    return data || [];
+  }
+
+  async getBannerById(id: string) {
+    const bannersRef = ref(getDatabase(), `banners/${id}`);
     const snapshot = await get(bannersRef);
     return snapshot.val() || [];
   }

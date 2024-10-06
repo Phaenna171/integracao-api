@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Delete, Param, UseInterceptors, UploadedFile, ParseFilePipe, FileTypeValidator, BadRequestException, UseGuards, Put } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Param, UseInterceptors, UploadedFile, ParseFilePipe, FileTypeValidator, BadRequestException, UseGuards, Put, Body } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { BannersService } from './banners.service';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiConsumes, ApiBody, ApiParam } from '@nestjs/swagger';
@@ -6,18 +6,18 @@ import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 
 @ApiTags('Banners')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('banners')
 export class BannersController {
-  constructor(private readonly bannersService: BannersService) {}
+  constructor(private readonly bannersService: BannersService) { }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   @UseInterceptors(FileInterceptor('file', {
     fileFilter: (req, file, callback) => {
-      if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+      if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|svg|webp)$/)) {
         return callback(new BadRequestException('Only image files are allowed!'), false);
       }
-      if(file.size > 10000000) return callback(new BadRequestException('Image are so large. Use image with less than 10MB'), false);
+      if (file.size > 10000000) return callback(new BadRequestException('Image are so large. Use image with less than 10MB'), false);
       callback(null, true);
     },
   }))
@@ -32,11 +32,14 @@ export class BannersController {
           type: 'string',
           format: 'binary',
         },
+        link: { type: 'string' },
+        description: { type: 'string' },
+        title: { type: 'string' },
       },
     },
   })
-  async createBanner(@UploadedFile() file: Express.Multer.File) {
-    return this.bannersService.createBanner(file);
+  async createBanner(@Body() body: any, @UploadedFile() file: Express.Multer.File) {
+    return this.bannersService.createBanner(body,file);
   }
 
   @Get()
@@ -46,6 +49,14 @@ export class BannersController {
     return this.bannersService.getBanners();
   }
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Get banner by id' })
+  @ApiResponse({ status: 200, description: 'Return banner by id.' })
+  async getBannerById(@Param('id') id: string) {
+    return this.bannersService.getBannerById(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a banner' })
   @ApiResponse({ status: 200, description: 'Banner deleted successfully.' })
@@ -53,7 +64,8 @@ export class BannersController {
     return this.bannersService.deleteBanner(id);
   }
 
-  @Put(':bannerId')
+  @UseGuards(JwtAuthGuard)
+  @Put(':id')
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Update an existing banner' })
   @ApiConsumes('multipart/form-data')
@@ -69,11 +81,11 @@ export class BannersController {
       },
     },
   })
-  @ApiParam({ name: 'bannerId', description: 'ID of the banner to update' })
-  async updateBanner(@Param('bannerId') bannerId: string, @UploadedFile() file: Express.Multer.File) {
-    if (!bannerId) {
+  @ApiParam({ name: 'id', description: 'ID of the banner to update' })
+  async updateBanner(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
+    if (!id) {
       throw new BadRequestException('Banner ID is required');
     }
-    return await this.bannersService.updateBanner(bannerId, file);
+    return await this.bannersService.updateBanner(id, file);
   }
 }
