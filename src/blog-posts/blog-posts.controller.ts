@@ -7,10 +7,10 @@ import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 @ApiTags('BlogPosts')
 @ApiBearerAuth()
 @Controller('blog-posts')
-@UseGuards(JwtAuthGuard)
 export class BlogPostsController {
   constructor(private readonly blogPostsService: BlogPostsService) { }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
@@ -21,9 +21,8 @@ export class BlogPostsController {
       type: 'object',
       properties: {
         title: { type: 'string' },
-        subtitle: { type: 'string' },
         description: { type: 'string' },
-        image: {
+        file: {
           type: 'string',
           format: 'binary',
         }
@@ -41,6 +40,14 @@ export class BlogPostsController {
     return this.blogPostsService.getPosts();
   }
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Get all blog posts' })
+  @ApiResponse({ status: 200, description: 'Return all blog posts.' })
+  async getPostById(@Param('id') id: string) {
+    return this.blogPostsService.getPostById(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a blog post' })
   @ApiResponse({ status: 200, description: 'Blog post deleted successfully.' })
@@ -48,6 +55,7 @@ export class BlogPostsController {
     return this.blogPostsService.deletePost(id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Put(':postId')
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Update an existing blog post' })
@@ -57,9 +65,8 @@ export class BlogPostsController {
       type: 'object',
       properties: {
         title: { type: 'string' },
-        subtitle: { type: 'string' },
         description: { type: 'string' },
-        image: {
+        file: {
           type: 'string',
           format: 'binary',
         }
@@ -67,7 +74,7 @@ export class BlogPostsController {
     },
   })
   @ApiParam({ name: 'postId', description: 'ID of the blog post to update' })
-  async updatePost(@Param('postId') postId: string, @UploadedFile() file: Express.Multer.File, @Body() data: any) {
+  async updatePost(@Param('postId') postId: string, @Body() data: any, @UploadedFile() file?: Express.Multer.File,) {
     if (!postId) {
       throw new BadRequestException('Post ID is required');
     }

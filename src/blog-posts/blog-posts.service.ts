@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ref, set, push, remove, get, getDatabase } from 'firebase/database';
+import { ref, set, push, remove, get, getDatabase, update } from 'firebase/database';
 import { uploadBytes, ref as storageRef, getDownloadURL, getStorage, deleteObject } from 'firebase/storage';
 
 @Injectable()
@@ -11,7 +11,7 @@ export class BlogPostsService {
 
     const postsRef = ref(getDatabase(), 'blogPosts');
     const newPostRef = push(postsRef);
-    await set(newPostRef, { ...data, imageUrl });
+    await set(newPostRef, { ...data, image: imageUrl, createdAt: new Date().getTime()  });
 
     return { success: true, postId: newPostRef.key };
   }
@@ -27,7 +27,7 @@ export class BlogPostsService {
     }
 
     const postData = snapshot.val();
-    const imageUrl = postData.imageUrl;
+    const imageUrl = postData.image;
 
     // Delete the image from Firebase Storage
     const storage = getStorage();
@@ -43,10 +43,18 @@ export class BlogPostsService {
   async getPosts() {
     const postsRef = ref(getDatabase(), 'blogPosts');
     const snapshot = await get(postsRef);
+    if (!snapshot.exists()) return []
+    const data = Object.entries(snapshot.val())?.map(([key, value]: [key: string, value: any]) => ({ ...value, id: key }))
+    return data || [];
+  }
+
+  async getPostById(id: string) {
+    const blogPostsRef = ref(getDatabase(), `blogPosts/${id}`);
+    const snapshot = await get(blogPostsRef);
     return snapshot.val() || [];
   }
 
-  async updatePost(postId: string, data: any, file: Express.Multer.File) {
+  async updatePost(postId: string, data: any, file?: Express.Multer.File) {
     const postRef = ref(getDatabase(), `blogPosts/${postId}`);
 
     const snapshot = await get(postRef);
@@ -54,10 +62,10 @@ export class BlogPostsService {
       throw new Error('Post not found');
     }
 
-    const postData = snapshot.val();
-    let imageUrl = postData.imageUrl;
-
     if (file) {
+      const postData = snapshot.val();
+      let imageUrl = postData.image;
+
       const storage = getStorage();
       const oldImageRef = storageRef(storage, imageUrl);
       await deleteObject(oldImageRef);
@@ -65,9 +73,9 @@ export class BlogPostsService {
       const newImageRef = storageRef(storage, `blog/${file.originalname}`);
       const uploadResult = await uploadBytes(newImageRef, file.buffer);
       imageUrl = await getDownloadURL(uploadResult.ref);
-    }
+      await set(postRef, { ...data, image: imageUrl });
+    } else await update(postRef, { ...data })
 
-    await set(postRef, { ...data, imageUrl });
     return { success: true };
   }
 }
