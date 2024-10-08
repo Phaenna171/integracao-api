@@ -71,29 +71,28 @@ export class ProductsService {
       const snapshot = await get(productRef);
       if (!snapshot.exists()) throw new Error('Product not found');
 
-      const productData = snapshot.val();
-      const storage = getStorage();
-      // If there are existing carouselPhotos, remove the old ones from storage
-      if (productData.carouselPhotos && productData.carouselPhotos.length > 0) {
-        await Promise.all(
-          productData.carouselPhotos.map(async (url: string) => {
-            const oldImageRef = storageRef(storage, url);
-            await deleteObject(oldImageRef); // Delete old images
-          })
-        );
-      }
-
-      // Upload new carousel photos
-      const carouselPhotos = await Promise.all(
-        files?.map(async (file) => {
-          const newImageRef = storageRef(storage, `products/${file.originalname}`);
-          const uploadResult = await uploadBytes(newImageRef, file.buffer);
-          return await getDownloadURL(uploadResult.ref); // Get the download URL for the uploaded image
-        })
-      );
-
-
       if (files.length > 0) {
+        const productData = snapshot.val();
+        const storage = getStorage();
+
+        // If there are existing carouselPhotos, remove the old ones from storage
+        if (productData.carouselPhotos && productData.carouselPhotos.length > 0) {
+          await Promise.all(
+            productData.carouselPhotos.map(async (url: string) => {
+              const oldImageRef = storageRef(storage, url);
+              await deleteObject(oldImageRef); // Delete old images
+            })
+          ).catch(e => console.error(e))
+        }
+
+        // Upload new carousel photos
+        const carouselPhotos = await Promise.all(
+          files?.map(async (file) => {
+              const newImageRef = storageRef(storage, `products/${file.originalname}`);
+              const uploadResult = await uploadBytes(newImageRef, file.buffer);
+              return await getDownloadURL(uploadResult.ref); // Get the download URL for the uploaded image
+          })
+        ).catch(e => console.error(e))
         // Update the product with new data and new carousel photos
         await set(productRef, {
           ...data,
@@ -105,7 +104,7 @@ export class ProductsService {
       } else {
         await set(productRef, {
           ...data,
-          carouselPhotos: data.oldPhotos,
+          carouselPhotos: [data.oldPhotos],
           use: JSON.parse(data.use), // Parse use field
           table: JSON.parse(data.table), // Parse table field
           indication: JSON.parse(data.indication), // Parse indication field
