@@ -9,7 +9,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'https://safrasul-sementes.vercel.app',
-      'https://safrasul-mu.vercel.app',
+      'https://safrasulsementes.vercel.app',
       'https://safrasulsementes.com.br',
     ]
   })
