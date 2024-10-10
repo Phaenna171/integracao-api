@@ -5,7 +5,14 @@ import { initializeFirebaseApp } from "./firebase";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.enableCors()
+  app.enableCors({
+    origin: [
+      'http://localhost:3000',
+      'https://safrasul-sementes.vercel.app',
+      'https://safrasul-mu.vercel.app',
+      'https://safrasulsementes.com.br',
+    ]
+  })
 
   initializeFirebaseApp()
 
