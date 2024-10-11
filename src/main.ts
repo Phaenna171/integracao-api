@@ -11,6 +11,7 @@ async function bootstrap() {
       'https://safrasul-sementes.vercel.app',
       'https://safrasulsementes.vercel.app',
       'https://safrasulsementes.com.br',
+      'https://www.safrasulsementes.com.br'
     ]
   })
 
