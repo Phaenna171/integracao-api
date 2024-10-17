@@ -102,9 +102,11 @@ export class ProductsService {
           indication: JSON.parse(data.indication), // Parse indication field
         });
       } else {
+        const oldPhotos = data.oldPhotos
+        delete data.oldPhotos
         await set(productRef, {
           ...data,
-          carouselPhotos: [data.oldPhotos],
+          carouselPhotos: [oldPhotos],
           use: JSON.parse(data.use), // Parse use field
           table: JSON.parse(data.table), // Parse table field
           indication: JSON.parse(data.indication), // Parse indication field
