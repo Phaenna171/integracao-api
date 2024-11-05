@@ -6,11 +6,11 @@ import { uploadBytes, ref as storageRef, getDownloadURL, getStorage, deleteObjec
 export class BannersService {
   async createBanner(data: any, file: Express.Multer.File) {
     if (!file) throw new Error('No file found')
-    const storageReference = storageRef(getStorage(), `banners/${file.originalname}`);
+    const storageReference = storageRef(getStorage(), `banners-integracao/${file.originalname}`);
     const uploadResult = await uploadBytes(storageReference, file.buffer);
     const imageUrl = await getDownloadURL(uploadResult.ref);
 
-    const bannersRef = ref(getDatabase(), 'banners');
+    const bannersRef = ref(getDatabase(), 'banners-integracao');
     const newBannerRef = push(bannersRef);
     await set(newBannerRef, { ...data, image: imageUrl });
 
@@ -19,7 +19,7 @@ export class BannersService {
 
   async deleteBanner(bannerId: string) {
     const db = getDatabase();
-    const bannerRef = ref(db, `banners/${bannerId}`);
+    const bannerRef = ref(db, `banners-integracao/${bannerId}`);
 
     // Retrieve the banner details first
     const snapshot = await get(bannerRef);
@@ -40,7 +40,7 @@ export class BannersService {
   }
 
   async getBanners() {
-    const bannersRef = ref(getDatabase(), 'banners');
+    const bannersRef = ref(getDatabase(), 'banners-integracao');
     const snapshot = await get(bannersRef);
     if (!snapshot.exists()) return []
     const data = Object.entries(snapshot.val())?.map(([key, value]: [key: string, value: any]) => ({ ...value, id: key }))
@@ -48,13 +48,13 @@ export class BannersService {
   }
 
   async getBannerById(id: string) {
-    const bannersRef = ref(getDatabase(), `banners/${id}`);
+    const bannersRef = ref(getDatabase(), `banners-integracao/${id}`);
     const snapshot = await get(bannersRef);
     return snapshot.val() || [];
   }
 
   async updateBanner(bannerId: string, data: any, file?: Express.Multer.File) {
-    const bannerRef = ref(getDatabase(), `banners/${bannerId}`);
+    const bannerRef = ref(getDatabase(), `banners-integracao/${bannerId}`);
 
     const snapshot = await get(bannerRef);
     if (!snapshot.exists()) {
@@ -70,7 +70,7 @@ export class BannersService {
       await deleteObject(oldImageRef);
 
       // Upload the new image
-      const newImageRef = storageRef(storage, `banners/${file.originalname}`);
+      const newImageRef = storageRef(storage, `banners-integracao/${file.originalname}`);
       const uploadResult = await uploadBytes(newImageRef, file.buffer);
       imageUrl = await getDownloadURL(uploadResult.ref);
       await set(bannerRef, { ...data, image: imageUrl });

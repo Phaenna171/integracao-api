@@ -7,13 +7,13 @@ export class ProductsService {
   async createProduct(data: any, files: Express.Multer.File[]) {
 
     const carouselPhotos = await Promise.all(files.map(async el => {
-      const storageReference = storageRef(getStorage(), `products/${el.originalname}`);
+      const storageReference = storageRef(getStorage(), `products-integracao/${el.originalname}`);
       const uploadResult = await uploadBytes(storageReference, el.buffer);
       const imageUrl = await getDownloadURL(uploadResult.ref);
       return imageUrl
     }))
 
-    const productsRef = ref(getDatabase(), 'products');
+    const productsRef = ref(getDatabase(), 'products-integracao');
     const newProductRef = push(productsRef);
     await set(newProductRef, {
       ...data, carouselPhotos, use: JSON.parse(data.use),
@@ -25,7 +25,7 @@ export class ProductsService {
 
   async deleteProduct(id: string) {
     const db = getDatabase();
-    const productRef = ref(db, `products/${id}`);
+    const productRef = ref(db, `products-integracao/${id}`);
 
     // Retrieve the product details
     const snapshot = await get(productRef);
@@ -50,7 +50,7 @@ export class ProductsService {
   }
 
   async getProducts() {
-    const productsRef = ref(getDatabase(), 'products');
+    const productsRef = ref(getDatabase(), 'products-integracao');
     const snapshot = await get(productsRef);
     if (!snapshot.exists()) return []
     const data = Object.entries(snapshot.val())?.map(([key, value]: [key: string, value: any]) => ({ ...value, id: key }))
@@ -58,14 +58,14 @@ export class ProductsService {
   }
 
   async getProductById(id: string) {
-    const productsRef = ref(getDatabase(), `products/${id}`);
+    const productsRef = ref(getDatabase(), `products-integracao/${id}`);
     const snapshot = await get(productsRef);
     return snapshot.val() || [];
   }
 
   async updateProduct(id: string, data: any, files?: Express.Multer.File[]) {
     try {
-      const productRef = ref(getDatabase(), `products/${id}`);
+      const productRef = ref(getDatabase(), `products-integracao/${id}`);
 
       // Check if the product exists
       const snapshot = await get(productRef);
@@ -88,7 +88,7 @@ export class ProductsService {
         // Upload new carousel photos
         const carouselPhotos = await Promise.all(
           files?.map(async (file) => {
-              const newImageRef = storageRef(storage, `products/${file.originalname}`);
+              const newImageRef = storageRef(storage, `products-integracao/${file.originalname}`);
               const uploadResult = await uploadBytes(newImageRef, file.buffer);
               return await getDownloadURL(uploadResult.ref); // Get the download URL for the uploaded image
           })
