@@ -8,17 +8,17 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'http://localhost:3000',
-      'https://safrasul-sementes.vercel.app',
-      'https://safrasulsementes.vercel.app',
-      'https://safrasulsementes.com.br',
-      'https://www.safrasulsementes.com.br'
+      'https://integracao-sementes.vercel.app',
+      'https://integracaosementes.vercel.app',
+      'https://integracaosementes.com.br',
+      'https://www.integracaosementes.com.br'
     ]
   })
 
   initializeFirebaseApp()
 
   const config = new DocumentBuilder()
-    .setTitle('Safrasul Admin API')
+    .setTitle('Integração Admin API')
     .setDescription('API for managing products, banners, and blog posts')
     .addBearerAuth()
     .setVersion('1.0')
