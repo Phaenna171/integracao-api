@@ -8,6 +8,7 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'http://localhost:3000',
+      'http://localhost:3000/',
       'https://integracao-sementes.vercel.app',
       'https://integracaosementes.vercel.app',
       'https://integracaosementes.com.br',
