@@ -5,6 +5,7 @@ import { ProductsModule } from "./products/products.module";
 import { BannersModule } from "./banners/banners.module";
 import { BlogPostsModule } from "./blog-posts/blog-posts.module";
 import { ConfigModule } from "@nestjs/config";
+import { MailModule } from "./mail/mail.module";
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { ConfigModule } from "@nestjs/config";
     BannersModule,
     ProductsModule,
     BlogPostsModule,
+    MailModule
   ],
   controllers: [AppController],
 })

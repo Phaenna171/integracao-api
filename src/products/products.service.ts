@@ -116,6 +116,142 @@ export class ProductsService {
   }
 
 
+  async createMix(data: any, files: Express.Multer.File[]) {
+    // Upload das imagens (productImage e backgroundImage)
+    const uploadedImages = await Promise.all(
+      files.map(async (file) => {
+        const storageReference = storageRef(
+          getStorage(),
+          `${'mix-integracao'}/${file.originalname}`,
+        );
+        const uploadResult = await uploadBytes(storageReference, file.buffer);
+        return await getDownloadURL(uploadResult.ref);
+      }),
+    );
+
+    // Mapear os uploads para as respectivas propriedades
+    const [productImage, backgroundImage] = uploadedImages;
+
+    // Adicionar o mix ao Firebase Database
+    const mixesRef = ref(getDatabase(), 'mix-integracao');
+    const newMixRef = push(mixesRef);
+    await set(newMixRef, {
+      ...data,
+      productImage,
+      backgroundImage,
+      topics: JSON.parse(data.topics), // Converte os tópicos recebidos como string para array
+    });
+
+    return { success: true, mixId: newMixRef.key };
+  }
+
+  async getMixes() {
+    const mixesRef = ref(getDatabase(), 'mix-integracao');
+    const snapshot = await get(mixesRef);
+
+    if (!snapshot.exists()) return [];
+    const data = Object.entries(snapshot.val()).map(([key, value]: [string, any]) => ({
+      ...value,
+      id: key,
+    }));
+    return data || [];
+  }
+
+  async getMixById(id: string) {
+    const mixRef = ref(getDatabase(), `${'mix-integracao'}/${id}`);
+    const snapshot = await get(mixRef);
+
+    if (!snapshot.exists()) {
+      throw new Error('Mix not found');
+    }
+    return { ...snapshot.val(), id };
+  }
+
+  async updateMix(id: string, data: any, files?: Express.Multer.File[]) {
+    const mixRef = ref(getDatabase(), `${'mix-integracao'}/${id}`);
+
+    // Verifica se o mix existe
+    const snapshot = await get(mixRef);
+    if (!snapshot.exists()) {
+      throw new Error('Mix not found');
+    }
+
+    const mixData = snapshot.val();
+    const storage = getStorage();
+
+    let updatedProductImage = mixData.productImage;
+    let updatedBackgroundImage = mixData.backgroundImage;
+
+    // Atualiza imagens, se novas forem enviadas
+    if (files?.length) {
+      const uploads = await Promise.all(
+        files.map(async (file) => {
+          const storageReference = storageRef(
+            storage,
+            `${'mix-integracao'}/${file.originalname}`,
+          );
+          const uploadResult = await uploadBytes(storageReference, file.buffer);
+          return await getDownloadURL(uploadResult.ref);
+        }),
+      );
+
+      // Substitui as imagens atuais
+      if (uploads[0]) {
+        const oldProductImageRef = storageRef(storage, mixData.productImage);
+        await deleteObject(oldProductImageRef);
+        updatedProductImage = uploads[0];
+      }
+
+      if (uploads[1]) {
+        const oldBackgroundImageRef = storageRef(storage, mixData.backgroundImage);
+        await deleteObject(oldBackgroundImageRef);
+        updatedBackgroundImage = uploads[1];
+      }
+    }
+
+    // Atualiza o mix no Firebase Database
+    await set(mixRef, {
+      ...data,
+      productImage: updatedProductImage,
+      backgroundImage: updatedBackgroundImage,
+      topics: JSON.parse(data.topics), // Converte os tópicos recebidos como string para array
+    });
+
+    return { success: true };
+  }
+
+  async deleteMix(id: string) {
+    const mixRef = ref(getDatabase(), `${'mix-integracao'}/${id}`);
+
+    // Recupera os detalhes do mix
+    const snapshot = await get(mixRef);
+    if (!snapshot.exists()) {
+      throw new Error('Mix not found');
+    }
+
+    const mixData = snapshot.val();
+    const { productImage, backgroundImage } = mixData;
+
+    const storage = getStorage();
+
+    // Remove as imagens do Firebase Storage
+    if (productImage) {
+      const productImageRef = storageRef(storage, productImage);
+      await deleteObject(productImageRef);
+    }
+
+    if (backgroundImage) {
+      const backgroundImageRef = storageRef(storage, backgroundImage);
+      await deleteObject(backgroundImageRef);
+    }
+
+    // Remove o mix do Firebase Database
+    await remove(mixRef);
+
+    return { success: true };
+  }
+
+
   async getCategories(): Promise<any[]> {
     const snapshot = await get(ref(getDatabase(), 'categories-integracao'))
     const categories = snapshot.val();
