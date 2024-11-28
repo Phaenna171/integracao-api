@@ -10,6 +10,52 @@ import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) { }
 
+    // Categories routes
+
+    @Get('/category')
+    @ApiOperation({ summary: 'Get all categories' })
+    @ApiResponse({ status: 200, description: 'Return all categories.' })
+    @UseGuards(JwtAuthGuard)
+    async getCategories() {
+      return this.productsService.getCategories();
+    }
+  
+    @Get('/category/:id')
+    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Get category by ID' })
+    @ApiResponse({ status: 200, description: 'Return a specific category.' })
+    async getCategoryById(@Param('id') id: string) {
+      return this.productsService.getCategoryById(id);
+    }
+  
+    @UseGuards(JwtAuthGuard)
+    @Post('/category')
+    @ApiOperation({ summary: 'Create a new category' })
+    @ApiResponse({ status: 201, description: 'Category created successfully.' })
+    async createCategory(@Body() createCategoryDto: any) {
+      return this.productsService.createCategory(createCategoryDto);
+    }
+  
+    @UseGuards(JwtAuthGuard)
+    @Put('/category/:id')
+    @ApiOperation({ summary: 'Update a category' })
+    @ApiResponse({ status: 200, description: 'Category updated successfully.' })
+    async updateCategory(
+      @Param('id') id: string,
+      @Body() updateCategoryDto: any,
+    ) {
+      return this.productsService.updateCategory(id, updateCategoryDto);
+    }
+  
+    @UseGuards(JwtAuthGuard)
+    @Delete('/category/:id')
+    @ApiOperation({ summary: 'Delete a category' })
+    @ApiResponse({ status: 200, description: 'Category deleted successfully.' })
+    async deleteCategory(@Param('id') id: string) {
+      return this.productsService.deleteCategory(id);
+    }
+  
+
   @UseGuards(JwtAuthGuard)
   @Post()
   @UseInterceptors(FilesInterceptor('carouselPhotos'))
