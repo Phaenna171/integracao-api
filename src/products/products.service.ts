@@ -17,7 +17,9 @@ export class ProductsService {
     const newProductRef = push(productsRef);
     await set(newProductRef, {
       ...data, carouselPhotos,
-      table: JSON.parse(data.table)
+      table: JSON.parse(data.table),
+      use: JSON.parse(data.use),
+      indication: JSON.parse(data.indication),
     });
 
     return { success: true, productId: newProductRef.key };
@@ -98,6 +100,8 @@ export class ProductsService {
           ...data,
           carouselPhotos, // Update carousel photos
           table: JSON.parse(data.table), // Parse table field
+          use: JSON.parse(data.use), // Parse table field
+          indication: JSON.parse(data.indication), // Parse table field
         });
       } else {
         const oldPhotos = data.oldPhotos
@@ -106,6 +110,8 @@ export class ProductsService {
           ...data,
           carouselPhotos: [oldPhotos],
           table: JSON.parse(data.table), // Parse table field
+          use: JSON.parse(data.use), // Parse table field
+          indication: JSON.parse(data.indication), // Parse table field
         });
       }
 
@@ -146,14 +152,10 @@ export class ProductsService {
   }
 
   async getMixes() {
-    const mixesRef = ref(getDatabase(), 'mix-integracao');
-    const snapshot = await get(mixesRef);
-
-    if (!snapshot.exists()) return [];
-    const data = Object.entries(snapshot.val()).map(([key, value]: [string, any]) => ({
-      ...value,
-      id: key,
-    }));
+    const productsRef = ref(getDatabase(), 'mix-integracao');
+    const snapshot = await get(productsRef);
+    if (!snapshot.exists()) return []
+    const data = Object.entries(snapshot.val())?.map(([key, value]: [key: string, value: any]) => ({ ...value, id: key }))
     return data || [];
   }
 

@@ -143,7 +143,7 @@ export class ProductsController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Delete(':id')
+  @Delete('/mix/:id')
   @ApiOperation({ summary: 'Delete a mix' })
   @ApiResponse({ status: 200, description: 'Mix deleted successfully.' })
   async deleteMix(@Param('id') id: string) {
