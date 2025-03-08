@@ -27,8 +27,8 @@ export class MailController {
     try {
       // Configuração do email
       const message = {
-        to: 'aenamartinelli@gmail.com', // Destinatário
-        from: 'aenamartinelli@gmail.com', // Remetente (configure no SendGrid)
+        to: process.env.EMAIL_TO_SEND, // Destinatário
+        from: process.env.EMAIL_TO_SEND, // Remetente (configure no SendGrid)
         subject: 'Ficha Técnica de Reclamação Recebida',
         html: emailContent, // Corpo do email em HTML
       };
